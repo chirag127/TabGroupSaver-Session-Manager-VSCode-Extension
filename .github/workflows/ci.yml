@@ -1,45 +1,34 @@
-name: CI - TypeScript Extension Build & Test
-
+name: CI
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 jobs:
   build-and-test:
-    name: Build, Lint, Test, and Package
     runs-on: ubuntu-latest
-
     steps:
-    - name: 🚀 Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: 🛠️ Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20' # Using Node 20 as a stable LTS target
-        cache: 'npm'
-
-    - name: 📦 Install Dependencies (uv Standard)
-      run: npm ci
-
-    - name: 📐 Format & Lint Check (Biome Standard)
-      run: npx @biomejs/biome check --no-errors-on-warnings ./src
-
-    - name: 🧪 Unit Tests (Vitest)
-      run: npx vitest run --coverage
-
-    - name: 📦 Package Verification
-      # In a real scenario, this validates the VSIX structure before publishing
-      run: npx vsce package --no-verify
-
-    - name: 📊 Upload Code Coverage
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: 🤖 Self-Verification Checkpoint
-      run: |
-        echo "Architecture adherence check: Passed (TypeScript/Vite/Biome stack confirmed)"
-        echo "Agent Directives compliance: Confirmed via linting success."
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Install dependencies
+        run: npm install
+      - name: Run lint and tests
+        run: npm run lint && npm run test
+      - name: Build extension
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: extension
+          path: extension
+      - name: Deploy to VS Code Marketplace
+        uses: actions/deploy-vscode-extension@v1
+        with:
+          vsce-path: 'vsce'
+          extension-id: 'tabgroup-saver'
+          personal-access-token: ${{ secrets.PAT }}
+          vsce-args: '--yarn --vsce-version 2.12.1'
